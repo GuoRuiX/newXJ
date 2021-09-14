@@ -1,0 +1,83 @@
+server:
+  port: 8091
+  servlet:
+    context-path: /credit-information-service
+swagger:
+  enabled: true #是否开启swagger
+  basePackage: com.rjhc.credit.information.service #swagger扫描的包
+  docTitle: credit-information-service Rest Api #title
+  docDescription: Swagger document for producer-manager #描述信息
+  docVersion: 1.0 #版本1
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 300MB
+      max-request-size: 300MB
+#      本程序数据源
+  datasource: #mysql配置
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://60.205.204.133:3306/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false
+      username: root
+      password: root
+  redis: #redis配置
+    host: 60.205.204.133
+    port: 6379
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 5
+        min-idle: 5
+        max-wait: 5000
+    database: 1
+  profiles:
+    active: dev #激活哪个环境
+  application:
+    name: credit-information-service
+#  aop: #开启AOP
+#    auto: true
+jwt:
+  secret:
+    key: rJkf1K8&xc39@Rkmz #密钥
+  token:
+    expire:
+      time: 21600000 #token过期时间,6个小时
+  refresh:
+    token:
+      expire:
+        time: 23400000 #refreshToken过期时间,6.5小时
+      key:
+        prefix: CREDIT_CONTROL:JWT:REFRESH_TOKEN:%s #refreshToken 存储key前缀
+  single: #单点登录
+    key:
+      prefix: CREDIT_CONTROL:SINGLE:USERID:%s #userid 存储key前缀
+  blacklist:
+    key:
+      prefix: CREDIT_CONTROL:BLACKLIST:TOKEN:%s #token黑名单 存储key前缀
+  yellowlist:
+    key:
+      prefix: CREDIT_CONTROL:YELLOWLIST:TOKEN:%s #token黄名单,存储key前缀,存旧token
+    expire:
+      time:  300000 #5分钟,黄名单里，旧token存活时间
+# 信贷文件存储地址
+filePath: /Users/grx/files
+#filePath: /home/app/credit/upload
+
+scheduledTime.msg: 0 28 16 * * ?
+#数据同步时间设置
+#data.synchronization: 0 30 23 31 01 ?
+#data.synchronization: ? 50 15 13 10 ?
+data.synchronization: 0 30 11 * * ?
+xa.url: jdbc:mysql://60.205.204.133:3306/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
+xa.username: root
+xa.password: root
+xaOrg.url: jdbc:mysql://60.205.204.133:3306/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
+xaOrg.username: root
+xaOrg.password: root
+
+
+#analysis.token: http://11.88.18.8:8080/jwtApi/resolvingToken
+analysis.token: http://localhost:8083/gettoKen
+

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rjhc.credit.information.service.server.dao.mapper.UserMapper">
+    <select id="selUserNameAndPsd" parameterType="com.rjhc.credit.information.service.server.dao.dataobject.User" resultType="com.rjhc.credit.information.service.api.model.dto.UserDto">
+        select * from t_sc_login_user
+        <where>
+            <if test="loginName != null">
+                and LOGIN_NAME = #{loginName,jdbcType=VARCHAR}
+            </if>
+            <if test="password != null">
+                and PASS_WORD = #{password,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+</mapper>

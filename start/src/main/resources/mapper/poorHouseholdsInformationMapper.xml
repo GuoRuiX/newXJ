@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rjhc.credit.information.service.server.dao.mapper.PoorHouseholdsInformationMapper">
+    <select id="seleAllByIdCard"  resultType="com.rjhc.credit.information.service.server.dao.dataobject.PoorHouseholdsInformation">
+        select DISTINCT(id),
+        id,years, prefecture, counties, township, administrative_village, administrative_village_code, householdername, id_card, address, poor_households_code, population_code, poor_households_attribute, id_card_type, health, povertysign, familysize, relationship, gender, age, nation, landarea, woodlandarea, income, synchronization_date
+         from poor_households_Information
+        <where>
+            id_card in
+            <foreach collection="idCards" close=")" item="idCard" open="(" separator=",">
+                #{idCard}
+            </foreach>
+            and (income &lt; 3700 or povertysign = '未脱贫')
+        </where>
+    </select>
+<!--    根据信贷等级查询当前信用户数量-->
+    <select id="selePoorByIdCard" resultType="java.util.Map">
+        SELECT count(*) as num from poor_households_Information WHERE
+
+        in(
+        select DISTINCT(customer_id_card) from agricultural_organizations_2019
+        <where>
+            <foreach collection="creditLevels" open="credit_level=" separator="OR credit_level=" item="level">
+                #{level}
+            </foreach>
+        </where>
+            )
+    </select>
+
+    <insert id="savePoor" parameterType="java.util.List">
+        insert into poor_households_Information
+        (id, years, prefecture, counties,
+        township, administrative_village, administrative_village_code, householdername,
+        id_card, address, poor_households_code, population_code,
+        poor_households_attribute, id_card_type, health, povertysign,
+        familysize, relationship, gender, age,
+        nation, landarea, woodlandarea, income, synchronization_date)
+        values
+        <foreach collection="list" item="poorList" index="index" separator=",">
+            (#{poorList.id,jdbcType=VARCHAR},
+            #{poorList.years,jdbcType=VARCHAR},
+            #{poorList.prefecture,jdbcType=VARCHAR},
+            #{poorList.counties,jdbcType=VARCHAR},
+            #{poorList.township,jdbcType=VARCHAR},
+            #{poorList.administrativeVillage,jdbcType=VARCHAR},
+            #{poorList.administrativeVillageCode,jdbcType=VARCHAR},
+            #{poorList.householderName,jdbcType=VARCHAR},
+            #{poorList.idCard,jdbcType=VARCHAR},
+            #{poorList.address,jdbcType=VARCHAR},
+            #{poorList.poorHouseholdsCode,jdbcType=VARCHAR},
+            #{poorList.populationCode,jdbcType=VARCHAR},
+            #{poorList.poorHouseholdsAttribute,jdbcType=VARCHAR},
+            #{poorList.idCardType,jdbcType=VARCHAR},
+            #{poorList.health,jdbcType=VARCHAR},
+            #{poorList.povertySign,jdbcType=VARCHAR},
+            #{poorList.familySize,jdbcType=INTEGER},
+            #{poorList.relationShip,jdbcType=VARCHAR},
+            #{poorList.gender,jdbcType=VARCHAR},
+            #{poorList.age,jdbcType=INTEGER},
+            #{poorList.nation,jdbcType=VARCHAR},
+            #{poorList.landarea},
+            #{poorList.woodlandarea},
+            #{poorList.income},
+            #{poorList.synchronizationDate}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

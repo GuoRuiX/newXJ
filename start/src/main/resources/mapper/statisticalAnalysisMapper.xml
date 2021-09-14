@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rjhc.credit.information.service.server.dao.mapper.StatisticalAnalysisMapper">
+    <select id="selectReceiptCodeExist" parameterType="java.lang.String" resultType="com.rjhc.credit.information.service.server.dao.dataobject.StatisticalAnalysis">
+        select * from agricultural_organizations where receipt_code=#{receiptCode}
+    </select>
+    <!--按照地区分组-->
+    <select id="queryReportStatistics" parameterType="com.rjhc.credit.information.service.api.model.param.ReportParam" resultType="java.util.HashMap">
+        select tabA.bank_address,num,loanBalance,loanAmount,poors,incomes from
+        (
+        SELECT bank_address,
+        count(1) as num,
+        SUM(loan_balance) as loanBalance,
+        SUM(loan_amount) as loanAmount
+        FROM ${tableName} a
+        <where>
+            <if test="loanPurpose != null and loanPurpose != ''">
+                and loan_purpose = #{loanPurpose}
+            </if>
+            <if test="loanVarietie != null and loanVarietie != ''">
+                and loan_varietie = #{loanVarietie}
+            </if>
+            <if test="uploadList != null and uploadList.size > 0">
+                AND upload_organization in
+                <foreach collection="uploadList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+         GROUP BY bank_address
+        ) tabA
+        left join
+        (
+        select counties,
+        count(1) as poors,
+        SUM(income) as incomes FROM
+        poor_households_Information group by counties
+        )tabB on tabA.bank_address = tabB.counties ORDER BY ${orderLike}
+    </select>
+    <!--按照月份、贷款质量、担保方式分组-->
+    <select id="queryReportStatisticsBymonth" parameterType="com.rjhc.credit.information.service.api.model.param.ReportParam" resultType="java.util.HashMap">
+        SELECT ${type},
+        count(*) as num,
+        SUM(loan_balance) as loanBalance,
+        SUM(loan_amount) as loanAmount
+        FROM ${tableName} a
+        <where>
+            <if test="loanPurpose != null and loanPurpose != ''">
+                and loan_purpose = #{loanPurpose}
+            </if>
+            <if test="loanVarietie != null and loanVarietie != ''">
+                and loan_varietie = #{loanVarietie}
+            </if>
+            <if test="regionDtos != null and regionDtos.size > 0">
+                AND bank_address in
+                <foreach collection="regionDtos" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="uploadList != null and uploadList.size > 0">
+                AND upload_organization in
+                <foreach collection="uploadList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+        </where>
+        GROUP BY ${type}
+        ORDER BY null
+    </select>
+    <!--查询地区名称去重-->
+    <select id="distinctAddress" parameterType="java.lang.String" resultType="com.rjhc.credit.information.service.server.dao.dataobject.StatisticalAnalysis">
+        SELECT DISTINCT(bank_address) FROM ${tableName} WHERE bank_address_code=#{bankAddressCode}
+    </select>
+
+    <select id="countAll" resultType="java.util.HashMap" parameterType="java.lang.String">
+        SELECT IFNULL(SUM(loan_amount),0.00) as loanamount,IFNULL(SUM(loan_balance),0.00) as loanbalance FROM ${tableName}
+    </select>
+    <!--根据信用等级统计信用户数量-->
+    <select id="selByLevel" resultType="java.util.HashMap" parameterType="java.lang.String">
+        SELECT NULLIF(credit_level,'') AS creditLevel,
+            COUNT(DISTINCT customer_id_card) AS trustUserNo,
+            COUNT(id) AS loanNo,
+            SUM(loan_amount) AS totalLoanAmount,
+            SUM(loan_balance) AS totalLoanBalance
+        FROM ${tableName}  GROUP BY credit_level
+        HAVING creditLevel is not null ORDER BY null
+    </select>
+    <!--根据机构名称分组查询当前借贷信息笔数和贫困户户数，以及人均收入-->
+    <select id="selstaAndPoorByBankAddress" parameterType="java.lang.String" resultType="java.util.HashMap">
+        SELECT ${bankAddress},
+        count(*) as num,
+        SUM(loan_balance) as loanBalance,
+        SUM(loan_amount) as loanAmount,
+        (SELECT SUM(income) from poor_households_Information WHERE counties = a.bank_address) AS incomes,
+        (SELECT count(1) from poor_households_Information WHERE counties = ag.bank_address) AS poors
+        from ${tableName}  ag GROUP BY ${queryLike}  ORDER BY null
+    </select>
+
+    <!--按照等级部位空 上传机构分组-->
+    <select id="selStaCountByLevel" resultType="java.util.HashMap" parameterType="java.lang.String">
+        SELECT  COUNT(NULLIF(credit_level,'')),upload_organization from ${tableName}  GROUP BY upload_organization ORDER BY null
+    </select>
+    <!--1。深度县按照机构统计   就三种机构-->
+    <select id="slecounty" resultType="com.rjhc.credit.information.service.api.model.dto.CountyDto" parameterType="com.rjhc.credit.information.service.api.model.param.CountyParam">
+        SELECT
+        county,
+        ( SELECT COUNT( DISTINCT l.customer_id_card ) FROM ${tableName} l WHERE l.credit_account_logo = 1 AND l.bank_address = c.county ) AS creditNo,
+        ( SELECT count( 1 ) FROM poor_households_Information WHERE counties = c.county ) AS poorNo,
+        ( SELECT count( 1 ) FROM ${tableName} WHERE bank_address = c.county ) AS loanNo,
+        ( SELECT IFNULL(sum(loan_amount),0.00)	FROM ${tableName} WHERE bank_address = c.county ) AS loanAmount
+        FROM
+        poor_county c LEFT JOIN  ${tableName} a ON a.bank_address = c.county left join poor_households_Information p on p.counties = c.county
+
+        <if test="deptList != null and deptList.size > 0">
+            where a.upload_organization in
+            <foreach collection="deptList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+<!--        <if test=" county != null and county != ''">
+            WHERE c.county=#{county}
+        </if>-->
+        <if test=" countyLevel != null and countyLevel != ''">
+            and c.county_level=#{countyLevel}
+        </if>
+        <if test="startDate != null ">
+            AND a.loan_date <![CDATA[>=]]> #{startDate}
+        </if>
+        <if test="endDate != null ">
+            AND a.loan_date <![CDATA[<=]]> #{endDate}
+        </if>
+        GROUP BY county
+        <if test="countyList != null and countyList.size > 0">
+            having c.county  in
+            <foreach collection="countyList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY poorNo DESC,creditNo DESC,loanNo DESC,loanAmount DESC
+    </select>
+
+
+    <!--贫困县数据统计-->
+    <select id="selecountyByPoorNoTest" resultType="com.rjhc.credit.information.service.api.model.dto.CountyDto" parameterType="com.rjhc.credit.information.service.api.model.param.CountyParam">
+        SELECT
+        c.county,
+        loanNo,
+        loanBalance,
+        IFNULL(loanAmount,0.00) as loanAmount,
+        poorNo,
+        incomes,
+        creditNo
+    FROM
+        poor_county c
+        LEFT JOIN (
+        SELECT
+            tabA.bank_address,
+            loanNo,
+            loanBalance,
+            loanAmount,
+            poorNo,
+            incomes,
+            creditNo
+        FROM
+            (
+            SELECT
+                bank_address,
+                count( 1 ) AS loanNo,
+                SUM( loan_balance ) AS loanBalance,
+                SUM(loan_amount)  AS loanAmount,
+                COUNT( DISTINCT a.customer_id_card ) creditNo
+            FROM
+                ${tableName} a
+                <where>
+                    a.credit_account_logo = 1
+                    <if test="deptList != null and deptList.size > 0">
+                        and  a.upload_organization in
+                        <foreach collection="deptList" item="item" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                    </if>
+                    <if test="startDate != null ">
+                        AND a.loan_date <![CDATA[>=]]> #{startDate}
+                    </if>
+                    <if test="endDate != null ">
+                        AND a.loan_date <![CDATA[<=]]> #{endDate}
+                    </if>
+                </where>
+            GROUP BY
+                bank_address
+            ) tabA
+            LEFT JOIN ( SELECT counties, count( 1 ) AS poorNo, SUM( income ) AS incomes FROM poor_households_Information GROUP BY counties ) tabB ON tabA.bank_address = tabB.counties
+        ) tabCC ON tabCC.bank_address = c.county
+        <where>
+            <if test=" countyLevel != null and countyLevel != ''">
+                c.county_level=#{countyLevel}
+            </if>
+            <if test="countyList != null and countyList.size > 0">
+                and c.county  in
+                <foreach collection="countyList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    ORDER BY
+        loanNo DESC,loanAmount DESC , poorNo DESC , creditNo DESC
+    </select>
+    <!--根据类型删除当前类型的数据-->
+    <delete id="delByType" parameterType="java.lang.String">
+        delete  from agricultural_organizations where type=#{type,jdbcType=VARCHAR}
+    </delete>
+    <update id="updateByType" parameterType="java.lang.String">
+        update agricultural_organizations set type = #{newType,jdbcType=VARCHAR} where  type = #{oldType,jdbcType=VARCHAR}
+    </update>
+    <select id="selCount" parameterType="java.lang.String" resultType="java.lang.Long">
+        select count(1) from ${tableName}
+    </select>
+
+
+
+
+</mapper>
