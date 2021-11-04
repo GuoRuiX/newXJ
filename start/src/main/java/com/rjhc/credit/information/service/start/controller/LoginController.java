@@ -141,6 +141,9 @@ public class LoginController implements LoginInterface {
         //生成refreshToken
         String refreshToken = RandomUtil.UUID32();
         String id = userandUserName.get("loginId").toString();
+        //用户登录成功将角色信息返回值前端
+        String roleName = getXiAnData.getUserRelo(userandUserName.get("loginId").toString());
+        userandUserName.put("roleName",roleName);
         singleLogin(id,refreshToken);
         //保存refreshToken至redis，使用hash结构保存使用中的token以及用户标识
         String refreshTokenKey = String.format(jwtRefreshTokenKeyPrefix, refreshToken);

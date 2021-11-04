@@ -330,4 +330,21 @@ public class GetXiAnData {
     }
 
 
+    public String getUserRelo(String userName) throws Exception {
+        Class.forName(type);
+        Connection connection = DriverManager.getConnection(urlOrg, userNameOrg, passwordOrg);
+        //根据当前用户获取当前用户登录角色信息
+        String sql ="SELECT * FROM t_sc_role where ROLE_ID = (SELECT ROLE_ID FROM t_sc_role_member where MEMBER_ID = '"+userName+"')";
+        Statement statement = connection.createStatement();
+        ResultSet rs = statement.executeQuery(sql);
+        String roleName=null;
+        if(rs.next()){
+             roleName = rs.getString("ROLE_NAME");
+
+        }
+        connection.close();
+        return roleName;
+    }
+
+
 }

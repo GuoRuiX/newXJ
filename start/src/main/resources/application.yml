@@ -19,11 +19,11 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
       driver-class-name: com.mysql.jdbc.Driver
-      url: jdbc:mysql://60.205.204.133:3306/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false
+      url: jdbc:mysql://localhost:3307/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false
       username: root
       password: root
   redis: #redis配置
-    host: 60.205.204.133
+    host: 127.0.0.1
     port: 6379
     lettuce:
       pool:
@@ -70,10 +70,10 @@ scheduledTime.msg: 0 28 16 * * ?
 #data.synchronization: 0 30 23 31 01 ?
 #data.synchronization: ? 50 15 13 10 ?
 data.synchronization: 0 30 11 * * ?
-xa.url: jdbc:mysql://60.205.204.133:3306/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
+xa.url: jdbc:mysql://localhost:3307/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
 xa.username: root
 xa.password: root
-xaOrg.url: jdbc:mysql://60.205.204.133:3306/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
+xaOrg.url: jdbc:mysql://localhost:3307/credit-information-service?useUnicode=true&characterEncoding=utf8&useSSL=false&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
 xaOrg.username: root
 xaOrg.password: root
 
